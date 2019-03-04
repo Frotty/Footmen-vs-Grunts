@@ -1,0 +1,14 @@
+package DamageTexts
+import DamageType
+import ClosureEvents
+import FText
+import DmgMod
+
+init
+	EventListener.add(EVENT_UNIT_DAMAGED) ->
+		let dtype = getDamageType()
+		let dmg = getDamage()
+		let target = GetTriggerUnit()
+		let attacker = GetEventDamageSource()
+		if dtype == DamageType.SPELL
+			createFText(target.getPos3Real(), dmg.toInt().toString().substring(1), 8.5 * min(1,max(3, dmg.toInt() / 35)), 0.75, vec2(0, 0.075), colorA(133, 9, 25, 255), attacker.getOwner())

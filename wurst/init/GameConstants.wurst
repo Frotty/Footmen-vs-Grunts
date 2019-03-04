@@ -1,0 +1,16 @@
+package GameConstants
+import ObjectIdGenerator
+
+public constant ALLIANCE_PLAYER = players[10]
+public constant HORDE_PLAYER = players[11]
+
+public constant SPAWNER_ID = 'h000'
+public constant WAYPOINT_ID = 'h001'
+public constant BARRACKS_ID = 'hbar'
+
+public constant ALLIANCE_BASE_POS = vec2(-5500, 100)
+public constant HORDE_BASE_POS = vec2(5300, 60)
+
+// HEROES
+
+public constant HERO_MALFURION_ID = compiletime(HERO_ID_GEN.next())

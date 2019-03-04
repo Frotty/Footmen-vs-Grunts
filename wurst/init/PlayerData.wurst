@@ -1,0 +1,57 @@
+package PlayerData
+import ClosureTimers
+import Players
+import HeroSelector
+
+public constant allPlayers = new LinkedList<PlayerData>()
+public constant alliancePlayers = new LinkedList<PlayerData>()
+public constant hordePlayers = new LinkedList<PlayerData>()
+
+public PlayerData array pData
+
+public class PlayerData
+	var id = 0
+	var gameId = 0
+	var owner = players[0]
+
+	var deaths = 0
+	var kills = 0
+
+	// Hero child = null
+
+	construct(player plyer)
+		this.owner = plyer
+		id = plyer.getId()
+		gameId = allPlayers.size()
+
+		allPlayers.add(this)
+		if id < 5
+			alliancePlayers.add(this)
+			let heroSelector = allianceSelector()
+			heroSelector.display(owner, vec2(-5400, 200))
+		else
+			hordePlayers.add(this)
+			let heroSelector = hordeSelector()
+			heroSelector.display(owner, vec2(5500, 80))
+
+
+
+	ondestroy
+		allPlayers.remove(this)
+		pData[owner.getId()] = null
+		if gameId < allPlayers.size()
+			for p2 in allPlayers
+				if p2.gameId > gameId
+					p2.gameId--
+
+
+
+init
+	doAfter(.1) ->
+		for p in ALL_PLAYERS
+			if p.getSlotState() == PLAYER_SLOT_STATE_PLAYING and p.getController() == MAP_CONTROL_USER
+				pData[p.getId()] = new PlayerData(p)
+
+		onPlayerLeave() p ->
+			destroy pData[p.getId()]
+			printTimed(p.getNameColored() + " has left the game", 15.)

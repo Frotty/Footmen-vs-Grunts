@@ -1,0 +1,75 @@
+package Spawner
+import ClosureForGroups
+import GameConstants
+import Entity
+import Waypoint
+import ClosureTimers
+import Creep
+
+public class Barracks extends UnitEntity
+	Spawner spawner
+
+	construct(unit u, Spawner spawner)
+		super(u)
+		this.spawner = spawner
+		EventListener.add(u, EVENT_PLAYER_UNIT_DEATH) ->
+			spawner.terminate()
+
+public class Spawner extends UnitEntity
+	Waypoint firstWp
+	var meleeId = 'hfoo'
+	var rangedId = 'nhea'
+	UnitEntity barracks
+
+	construct(unit u)
+		super(u)
+		u.hide()
+		forNearestUnit(pos.toVec2(), 256., null) u2 ->
+			if u2.isAlive() and u2.isAliveTrick() and u2.getTypeId() == BARRACKS_ID
+				new Barracks(u2, this)
+		if owner == HORDE_PLAYER
+			meleeId = 'ogru'
+			rangedId = 'ohun'
+
+	override function slowUpdate()
+		super.slowUpdate()
+		if idleSeconds % 15 == 0
+			spawnMelee()
+
+		if idleSeconds % 45 == 0
+			spawnRanged()
+
+	function spawnMelee()
+		doPeriodicallyCounted(0.35, 3) cb ->
+			let creep = new Creep(createUnit(owner, meleeId, pos.toVec2().withTerrainZ(6.), pos.angleTo2d(firstWp.pos)))
+			creep.attack(firstWp.pos.toVec2())
+
+	function spawnRanged()
+		doPeriodicallyCounted(0.35, 2) cb ->
+			let creep = new Creep(createUnit(owner, rangedId, pos.toVec2().withTerrainZ(6.), pos.angleTo2d(firstWp.pos)))
+			creep.attack(firstWp.pos.toVec2())
+
+
+public function initSpawners()
+	initSpawners(ALLIANCE_PLAYER, true)
+	initSpawners(HORDE_PLAYER, false)
+
+
+function initSpawners(player owner, boolean goRight)
+	forUnitsOfPlayer(owner) u ->
+		if u.getTypeId() == SPAWNER_ID
+			let spawner = new Spawner(u)
+			let y = u.getY()
+			if y > 830
+				spawner.firstWp = goRight ? topLane.peek() : topLane.getFirst()
+			else if y < -1200
+				spawner.firstWp = goRight ? botLane.peek() : botLane.getFirst()
+			else
+				spawner.firstWp = goRight ? midLane.peek() : midLane.getFirst()
+			if goRight
+				spawner.firstWp.leftNeighbour = spawner
+			else
+				spawner.firstWp.rightNeighbour = spawner
+
+			// addLightning(LIGHTNING_CHAIN_LIGHTNING_PRIMARY, false, spawner.pos, spawner.firstWp.pos)
+

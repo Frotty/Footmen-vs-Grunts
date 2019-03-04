@@ -1,0 +1,62 @@
+package Waypoint
+import Entity
+import GameConstants
+import ClosureForGroups
+import OrderIds
+import ClosureTimers
+import Assets
+import Creep
+
+
+public let topLane = new LinkedList<Waypoint>
+public let midLane = new LinkedList<Waypoint>
+public let botLane = new LinkedList<Waypoint>
+
+
+public class Waypoint extends UnitEntity
+	UnitEntity leftNeighbour
+	UnitEntity rightNeighbour
+
+	construct(unit u)
+		super(u)
+		u.hide()
+		CreateTrigger()..registerUnitInRangeSource(actor, 256, null)
+		..addAction() ->
+			(GetTriggeringTrigger().getSource().getEntity() castTo Waypoint).inRange(GetTriggerUnit().getEntity())
+
+	function inRange(UnitEntity entity)
+		if entity instanceof Creep
+			let creep = entity castTo Creep
+			if entity.owner == ALLIANCE_PLAYER
+				doAfter(GetRandomReal(0.1, 0.7)) ->
+					creep.attack(rightNeighbour.getPos().toVec2())
+			else if entity.owner == HORDE_PLAYER
+				doAfter(GetRandomReal(0.1, 0.7)) ->
+					creep.attack(leftNeighbour.getPos().toVec2())
+
+
+public function initWaypoints()
+	forUnitsOfPlayer(DUMMY_PLAYER) u ->
+		if u.getTypeId() == WAYPOINT_ID
+			let wp = new Waypoint(u)
+			let y = u.getY()
+			if y > 830
+				topLane.add(wp)
+			else if y < -1200
+				botLane.add(wp)
+			else
+				midLane.add(wp)
+
+
+	apply(topLane)
+	apply(midLane)
+	apply(botLane)
+
+function apply(LinkedList<Waypoint> lane)
+	lane.sortWith((x, y) -> ((10000 + y.pos.x) - (10000 + x.pos.x)).toInt() - 10000)
+	for i = 0 to lane.size() - 2
+		let x1 = lane.get(i)
+		let x2 = lane.get(i + 1)
+		x1.leftNeighbour = x2
+		// addLightning(LIGHTNING_CHAIN_LIGHTNING_PRIMARY, false, x1.pos, x2.pos)
+		x2.rightNeighbour = x1

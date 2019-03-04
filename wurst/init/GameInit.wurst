@@ -1,0 +1,13 @@
+package GameInit
+import ClosureTimers
+import EntityManagement
+import Waypoint
+import Spawner
+
+function startGame()
+	initWaypoints()
+	initSpawners()
+	startEntityLoop()
+
+init
+	doAfter(0.1, () -> startGame())

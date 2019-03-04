@@ -1,0 +1,33 @@
+package Creep
+import Entity
+import OrderIds
+
+public class Creep extends UnitEntity
+	vec2 lastTarget = ZERO2
+	var oldDist = 9999.
+	var smart = false
+
+	construct(unit u)
+		super(u)
+		idleSeconds -= GetRandomInt(0, 4)
+
+	override function update()
+		super.update()
+
+	override function slowUpdate()
+		super.slowUpdate()
+		if idleSeconds % 5 == 0
+			if smart
+				attack(lastTarget)
+				smart = false
+			else
+				let dist = getPos().distanceTo2dSq(lastTarget)
+				if dist > oldDist
+					smart = true
+					actor.issuePointOrderById(OrderIds.smart, lastTarget)
+				oldDist = dist
+
+	function attack(vec2 target)
+		lastTarget = target
+		oldDist = getPos().distanceTo2dSq(target)
+		actor.issuePointOrderById(OrderIds.attack, target)

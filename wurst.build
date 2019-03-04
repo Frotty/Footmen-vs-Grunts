@@ -1,0 +1,10 @@
+---
+projectName: "FootmenVsGrunts"
+dependencies:
+- "https://github.com/wurstscript/wurstStdlib2"
+- "https://github.com/Frotty/Frentity"
+buildMapData:
+  name: "FootmenVsGrunts"
+  fileName: "FootmenVsGrunts"
+  author: "FootmenVsGrunts"
+  playerCount: 12

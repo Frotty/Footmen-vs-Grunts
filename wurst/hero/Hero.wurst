@@ -1,0 +1,28 @@
+package Hero
+import Entity
+import TimerDialog
+import ClosureTimers
+import GameConstants
+
+public class Hero extends UnitEntity
+
+	construct(player owner, vec2 pos, int id)
+		super(createUnit(owner, id, pos, angle(0)))
+		EventListener.add(actor, EVENT_PLAYER_UNIT_DEATH) ->
+			print(owner.getNameColored() + " was killed by " + GetKillingUnit().getOwner().getNameColored())
+			let tim = CreateTimer()
+
+			let dia = tim.createTimerDialog()
+			..setTitle(owner.getNameColored())
+			..setTitleColor(owner.getColor().toColor().withAlpha(255))
+			..display(true)
+
+			tim.doAfter(actor.getLevel() * 2. + 5) ->
+				let rpos = owner.getId() < 5 ? ALLIANCE_BASE_POS : HORDE_BASE_POS
+				actor.revive(rpos, true)
+				owner..selectSingle(actor)
+				..panCamToTimed(actor, 0.25)
+				dia.destr()
+
+
+

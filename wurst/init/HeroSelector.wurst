@@ -1,0 +1,29 @@
+package HeroSelector
+import Selector
+import Hero
+import Assets
+import HeroMalfurion
+
+
+function pickHero(Selector selector, Hero hero)
+	selector.owner.select(hero.actor)
+	selector.owner.panCamToTimed(hero.actor, 0.)
+	selector.terminate()
+
+@compiletime public function allianceSelector() returns SelectorBuilder
+	return new SelectorBuilder()
+		..btn("|cff1d9653Malfurion Stormrage")
+		..icon(Icons.bTNFurion)
+		..pos(0, 0)
+		..tooltip("|cff636363The first mortal night elf druid.")
+		..onClick((selector) -> pickHero(selector, new Malfurion(selector.owner, selector.getPos().toVec2())))
+		..build()
+
+@compiletime public function hordeSelector() returns SelectorBuilder
+	return new SelectorBuilder()
+		..btn("Far Seer")
+		..icon(Icons.bTNHeroFarseer)
+		..pos(0, 1)
+		..tooltip("Very cool dude")
+		..onClick((selector) -> pickHero(selector, new Hero(selector.owner, selector.getPos().toVec2(), 'Ofar')))
+		..build()

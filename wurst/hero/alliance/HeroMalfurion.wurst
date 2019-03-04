@@ -1,0 +1,54 @@
+package HeroMalfurion
+import Hero
+import GameConstants
+import Assets
+import AbilityTooltipGenerator
+import ClosureTimers
+import ClosureForGroups
+import Entity
+import DummyCaster
+import OrderIds
+
+public constant ENTANGLE_SPELL_ID = compiletime(ABIL_ID_GEN.next())
+public constant ENTANGLE_DUMMY_SPELL_ID = compiletime(ABIL_ID_GEN.next())
+
+public constant RealLevelClosure AOE = lvl -> 198. + 24. * lvl
+
+public class Malfurion extends Hero
+
+	construct(player owner, vec2 pos)
+		super(owner, pos, HERO_MALFURION_ID)
+		EventListener.onPointCast(actor, ENTANGLE_SPELL_ID) (caster, target) ->
+			let lvl = caster.getAbilityLevel(ENTANGLE_SPELL_ID)
+			flashEffect(Abilities.greenDragonMissile, target)
+			doAfter(0.55) ->
+				Log.info("dummy cast")
+				let dc = new DummyCaster()
+				..origin(pos)
+				..owner(owner)
+				forUnitsInRange(target, AOE.run(lvl)) u ->
+					if u.getEntity().owner.isEnemyOf(owner)
+						dc.castTarget(ENTANGLE_DUMMY_SPELL_ID, 1, OrderIds.entanglingroots, u)
+
+
+@compiletime function genObjs()
+	new HeroDefinition(HERO_MALFURION_ID, UnitIds.malfurion)
+	..setName("Malfurion Stormrage")
+	..setHeroAbilities(commaList(ENTANGLE_SPELL_ID))
+
+	let tgen = new AbilityTooltipGenerator("Entangles all units inside the target area after a small delay.")
+	new ChannelAbilityPreset(ENTANGLE_SPELL_ID, 4, true, tgen)
+	..presetTargetTypes(Targettype.POINT)
+	..presetOption(Option.TARGETIMAGE, true)
+	..presetButtonPosNormal(0, 2)
+	..presetIcon(Icons.bTNEntanglingRoots)
+	..presetHotkey("Q")
+
+	..tooltipStartListen()
+	..setName("|cff22bb7bRoots of the Earth|r")
+	..presetCooldown(lvl -> 27. - lvl * 2)
+	..presetAreaofEffect(AOE)
+	..tooltipStopListen()
+
+	new AbilityDefinitionEntanglingRootscreep(ENTANGLE_DUMMY_SPELL_ID)
+	..setDummyAbility()
