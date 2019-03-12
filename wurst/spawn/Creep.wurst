@@ -1,15 +1,26 @@
 package Creep
 import Entity
 import OrderIds
+import StandardTextTags
+
 
 public class Creep extends UnitEntity
 	vec2 lastTarget = ZERO2
 	var oldDist = 9999.
 	var smart = false
+	var bounty = 2
 
-	construct(unit u)
+	construct(unit u, int bounty)
 		super(u)
+		this.bounty = bounty
 		idleSeconds -= GetRandomInt(0, 4)
+		EventListener.add(actor, EVENT_PLAYER_UNIT_DEATH) ->
+			let killer = GetKillingUnit().getEntity()
+			if killer.owner.isEnemyOf(owner)
+				createGoldBountyTextTag(actor, bounty, killer.owner)
+				killer.owner.addGold(bounty)
+
+
 
 	override function update()
 		super.update()

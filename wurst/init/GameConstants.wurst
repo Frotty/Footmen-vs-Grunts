@@ -14,3 +14,4 @@ public constant HORDE_BASE_POS = vec2(5300, 60)
 // HEROES
 
 public constant HERO_MALFURION_ID = compiletime(HERO_ID_GEN.next())
+public constant HERO_SHAMAN_ID = compiletime(HERO_ID_GEN.next())

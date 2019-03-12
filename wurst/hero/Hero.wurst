@@ -1,6 +1,5 @@
 package Hero
 import Entity
-import TimerDialog
 import ClosureTimers
 import GameConstants
 

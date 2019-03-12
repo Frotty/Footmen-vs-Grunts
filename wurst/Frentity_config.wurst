@@ -1,4 +1,3 @@
 package Frentity_config
-import Frentity
 
 @config public constant DISABLE_TEAMATTACK = true

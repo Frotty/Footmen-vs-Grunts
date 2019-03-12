@@ -2,9 +2,7 @@ package Waypoint
 import Entity
 import GameConstants
 import ClosureForGroups
-import OrderIds
 import ClosureTimers
-import Assets
 import Creep
 
 

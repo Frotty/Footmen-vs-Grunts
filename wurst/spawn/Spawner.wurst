@@ -41,12 +41,12 @@ public class Spawner extends UnitEntity
 
 	function spawnMelee()
 		doPeriodicallyCounted(0.35, 3) cb ->
-			let creep = new Creep(createUnit(owner, meleeId, pos.toVec2().withTerrainZ(6.), pos.angleTo2d(firstWp.pos)))
+			let creep = new Creep(createUnit(owner, meleeId, pos.toVec2().withTerrainZ(6.), pos.angleTo2d(firstWp.pos)), GetRandomInt(22, 24))
 			creep.attack(firstWp.pos.toVec2())
 
 	function spawnRanged()
 		doPeriodicallyCounted(0.35, 2) cb ->
-			let creep = new Creep(createUnit(owner, rangedId, pos.toVec2().withTerrainZ(6.), pos.angleTo2d(firstWp.pos)))
+			let creep = new Creep(createUnit(owner, rangedId, pos.toVec2().withTerrainZ(6.), pos.angleTo2d(firstWp.pos)), GetRandomInt(16, 18))
 			creep.attack(firstWp.pos.toVec2())
 
 

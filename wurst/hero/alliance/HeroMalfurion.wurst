@@ -5,14 +5,38 @@ import Assets
 import AbilityTooltipGenerator
 import ClosureTimers
 import ClosureForGroups
-import Entity
 import DummyCaster
 import OrderIds
+import PresetBuffs
+import DamageTexts
 
 public constant ENTANGLE_SPELL_ID = compiletime(ABIL_ID_GEN.next())
 public constant ENTANGLE_DUMMY_SPELL_ID = compiletime(ABIL_ID_GEN.next())
 
 public constant RealLevelClosure AOE = lvl -> 198. + 24. * lvl
+
+public constant REGROWTH_SPELL_ID = compiletime(ABIL_ID_GEN.next())
+public constant REGROWTH_BUFF = compiletime(createDummyBuffObject("|cff0c8f5dRegrowth", "This unit is being healed and shielded", Icons.bTNTreeOfEternity, "HealingSurge.mdx"))
+
+public constant RealLevelClosure REGROWTH_DUR = lvl -> 4. + 2. * lvl
+public constant RealLevelClosure REGROWTH_VAL = lvl -> 5. + 5. * lvl
+
+public class RegrowthBuff extends NormalBuff
+	var healAmount = 0.
+	var caster = DUMMY_PLAYER
+
+	construct(real dur, real healAmount, player caster)
+		super(dur, REGROWTH_BUFF)
+		this.healAmount = healAmount
+		this.caster = caster
+		target.actor.addHP(healAmount * 3)
+		showHealText(target, healAmount, caster)
+
+	override function update()
+		super.update()
+		if duration % 1 == 0
+			target.actor.addHP(healAmount)
+			showHealText(target, healAmount, caster)
 
 public class Malfurion extends Hero
 
@@ -22,7 +46,6 @@ public class Malfurion extends Hero
 			let lvl = caster.getAbilityLevel(ENTANGLE_SPELL_ID)
 			flashEffect(Abilities.greenDragonMissile, target)
 			doAfter(0.55) ->
-				Log.info("dummy cast")
 				let dc = new DummyCaster()
 				..origin(pos)
 				..owner(owner)
@@ -30,21 +53,25 @@ public class Malfurion extends Hero
 					if u.getEntity().owner.isEnemyOf(owner)
 						dc.castTarget(ENTANGLE_DUMMY_SPELL_ID, 1, OrderIds.entanglingroots, u)
 
+		EventListener.onTargetCast(actor, REGROWTH_SPELL_ID) (caster, target) ->
+			let lvl = caster.getAbilityLevel(REGROWTH_SPELL_ID)
+			new RegrowthBuff(REGROWTH_DUR.run(lvl), REGROWTH_VAL.run(lvl), caster.getOwner())
+			.apply(target.getEntity())
 
 @compiletime function genObjs()
 	new HeroDefinition(HERO_MALFURION_ID, UnitIds.malfurion)
 	..setName("Malfurion Stormrage")
-	..setHeroAbilities(commaList(ENTANGLE_SPELL_ID))
+	..setHeroAbilities(commaList(ENTANGLE_SPELL_ID, AbilityIds.thornsAura, AbilityIds.tranquility, REGROWTH_SPELL_ID))
 
-	let tgen = new AbilityTooltipGenerator("Entangles all units inside the target area after a small delay.")
+	var tgen = new AbilityTooltipGenerator("Entangles all units inside the target area after a small delay.")
 	new ChannelAbilityPreset(ENTANGLE_SPELL_ID, 4, true, tgen)
-	..presetTargetTypes(Targettype.POINT)
 	..presetOption(Option.TARGETIMAGE, true)
 	..presetButtonPosNormal(0, 2)
 	..presetIcon(Icons.bTNEntanglingRoots)
-	..presetHotkey("Q")
+	..presetTargetTypes(Targettype.POINT)
 
 	..tooltipStartListen()
+	..presetHotkey("Q")
 	..setName("|cff22bb7bRoots of the Earth|r")
 	..presetCooldown(lvl -> 27. - lvl * 2)
 	..presetAreaofEffect(AOE)
@@ -52,3 +79,19 @@ public class Malfurion extends Hero
 
 	new AbilityDefinitionEntanglingRootscreep(ENTANGLE_DUMMY_SPELL_ID)
 	..setDummyAbility()
+
+	tgen = new AbilityTooltipGenerator("Heals a friendly unit flat and over time.")
+	new ChannelAbilityPreset(REGROWTH_SPELL_ID, 4, true, tgen)
+	..presetButtonPosNormal(1, 2)
+	..presetIcon(Icons.bTNTreeOfEternity)
+	..presetTargetTypes(Targettype.UNIT)
+
+	..tooltipStartListen()
+	..presetHotkey("W")
+	..setName("|cff14af06Regrowth|r")
+	..presetCooldown(lvl -> 21. - lvl * 2)
+	..presetCastRange(lvl -> 600 + 100. * lvl)
+	..addTooltipProperty("Duration", REGROWTH_DUR)
+	..addTooltipProperty("Heal amount", REGROWTH_VAL)
+	..tooltipStopListen()
+
