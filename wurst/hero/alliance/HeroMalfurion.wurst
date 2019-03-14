@@ -13,13 +13,19 @@ import DamageTexts
 public constant ENTANGLE_SPELL_ID = compiletime(ABIL_ID_GEN.next())
 public constant ENTANGLE_DUMMY_SPELL_ID = compiletime(ABIL_ID_GEN.next())
 
-public constant RealLevelClosure AOE = lvl -> 198. + 24. * lvl
+public constant RealLevelClosure ENTANGLE_AOE = lvl -> 198. + 24. * lvl
 
 public constant REGROWTH_SPELL_ID = compiletime(ABIL_ID_GEN.next())
-public constant REGROWTH_BUFF = compiletime(createDummyBuffObject("|cff0c8f5dRegrowth", "This unit is being healed and shielded", Icons.bTNTreeOfEternity, "HealingSurge.mdx"))
+public constant REGROWTH_BUFF = compiletime(createDummyBuffObject("|cff0c8f5dRegrowth", "This unit is being healed", Icons.bTNTreeOfEternity, "HealingSurge.mdx"))
 
 public constant RealLevelClosure REGROWTH_DUR = lvl -> 4. + 2. * lvl
 public constant RealLevelClosure REGROWTH_VAL = lvl -> 5. + 5. * lvl
+
+public constant MOONFIRE_SPELL_ID = compiletime(ABIL_ID_GEN.next())
+public constant MOONFIRE_BUFF = compiletime(createDummyBuffObject("|cff037abeMoonfire", "This unit is being burned", Icons.bTNManaBurn, Abilities.manaBurnTarget))
+
+public constant RealLevelClosure MOONFIRE_DUR = lvl -> 2. + 1. * lvl
+public constant RealLevelClosure MOONFIRE_VAL = lvl -> 5. + 5. * lvl
 
 public class RegrowthBuff extends NormalBuff
 	var healAmount = 0.
@@ -29,8 +35,6 @@ public class RegrowthBuff extends NormalBuff
 		super(dur, REGROWTH_BUFF)
 		this.healAmount = healAmount
 		this.caster = caster
-		target.actor.addHP(healAmount * 3)
-		showHealText(target, healAmount, caster)
 
 	override function update()
 		super.update()
@@ -38,30 +42,58 @@ public class RegrowthBuff extends NormalBuff
 			target.actor.addHP(healAmount)
 			showHealText(target, healAmount, caster)
 
+public class MoonfireBuff extends StackingBuff
+	var dmgAmount = 0.
+	unit caster
+
+	construct(real dur, real dmgAmount, unit caster)
+		super(dur, MOONFIRE_BUFF)
+		this.dmgAmount = dmgAmount
+		this.caster = caster
+
+	override function update()
+		super.update()
+		if duration % 1 == 0
+			this.caster.damageTarget(target.actor, dmgAmount)
+
 public class Malfurion extends Hero
 
 	construct(player owner, vec2 pos)
 		super(owner, pos, HERO_MALFURION_ID)
 		EventListener.onPointCast(actor, ENTANGLE_SPELL_ID) (caster, target) ->
 			let lvl = caster.getAbilityLevel(ENTANGLE_SPELL_ID)
-			flashEffect(Abilities.greenDragonMissile, target)
+			addEffect(Abilities.entanglingRootsTarget, target)..setScale(3.)..setAlpha(125)..destr()
 			doAfter(0.55) ->
 				let dc = new DummyCaster()
 				..origin(pos)
 				..owner(owner)
-				forUnitsInRange(target, AOE.run(lvl)) u ->
+				forUnitsInRange(target, ENTANGLE_AOE.run(lvl)) u ->
 					if u.getEntity().owner.isEnemyOf(owner)
 						dc.castTarget(ENTANGLE_DUMMY_SPELL_ID, 1, OrderIds.entanglingroots, u)
 
 		EventListener.onTargetCast(actor, REGROWTH_SPELL_ID) (caster, target) ->
 			let lvl = caster.getAbilityLevel(REGROWTH_SPELL_ID)
-			new RegrowthBuff(REGROWTH_DUR.run(lvl), REGROWTH_VAL.run(lvl), caster.getOwner())
+			let healAmount = REGROWTH_VAL.run(lvl)
+			new RegrowthBuff(REGROWTH_DUR.run(lvl), healAmount, caster.getOwner())
 			.apply(target.getEntity())
+			target.addHP(healAmount * 3)
+			showHealText(target.getEntity(), healAmount * 3, caster.getOwner())
+
+		EventListener.onPointCast(actor, MOONFIRE_SPELL_ID) (caster, target) ->
+			let lvl = caster.getAbilityLevel(MOONFIRE_SPELL_ID)
+			let dmgAmount = MOONFIRE_VAL.run(lvl)
+			doAfter(0.2) ->
+				flashEffect("Moonfire_Impact_Base.mdx", target)
+				forUnitsInRange(target, 128) u ->
+					if caster.getOwner().isEnemyOf(u.getOwner())
+						new MoonfireBuff(MOONFIRE_DUR.run(lvl), dmgAmount, caster)
+						.apply(u.getEntity())
+						caster.damageTarget(u, dmgAmount * 3)
 
 @compiletime function genObjs()
 	new HeroDefinition(HERO_MALFURION_ID, UnitIds.malfurion)
 	..setName("Malfurion Stormrage")
-	..setHeroAbilities(commaList(ENTANGLE_SPELL_ID, AbilityIds.thornsAura, AbilityIds.tranquility, REGROWTH_SPELL_ID))
+	..setHeroAbilities(commaList(ENTANGLE_SPELL_ID, MOONFIRE_SPELL_ID, AbilityIds.tranquility, REGROWTH_SPELL_ID))
 
 	var tgen = new AbilityTooltipGenerator("Entangles all units inside the target area after a small delay.")
 	new ChannelAbilityPreset(ENTANGLE_SPELL_ID, 4, true, tgen)
@@ -74,7 +106,7 @@ public class Malfurion extends Hero
 	..presetHotkey("Q")
 	..setName("|cff22bb7bRoots of the Earth|r")
 	..presetCooldown(lvl -> 27. - lvl * 2)
-	..presetAreaofEffect(AOE)
+	..presetAreaofEffect(ENTANGLE_AOE)
 	..tooltipStopListen()
 
 	new AbilityDefinitionEntanglingRootscreep(ENTANGLE_DUMMY_SPELL_ID)
@@ -85,6 +117,7 @@ public class Malfurion extends Hero
 	..presetButtonPosNormal(1, 2)
 	..presetIcon(Icons.bTNTreeOfEternity)
 	..presetTargetTypes(Targettype.UNIT)
+	..presetTargetsAllowed(lvl -> commaList(TargetsAllowed.allies, TargetsAllowed.self))
 
 	..tooltipStartListen()
 	..presetHotkey("W")
@@ -93,5 +126,20 @@ public class Malfurion extends Hero
 	..presetCastRange(lvl -> 600 + 100. * lvl)
 	..addTooltipProperty("Duration", REGROWTH_DUR)
 	..addTooltipProperty("Heal amount", REGROWTH_VAL)
+	..tooltipStopListen()
+
+	tgen = new AbilityTooltipGenerator("Burns enemy targets doing burst damage and damage over time.")
+	new ChannelAbilityPreset(MOONFIRE_SPELL_ID, 4, true, tgen)
+	..presetButtonPosNormal(2, 2)
+	..presetOption(Option.TARGETIMAGE, true)
+	..presetIcon(Icons.bTNMoonStone)
+	..presetTargetTypes(Targettype.POINT)
+
+	..tooltipStartListen()
+	..presetHotkey("E")
+	..setName("|cff105d9cMoonfire|r")
+	..presetCooldown(lvl -> 7. - lvl)
+	..presetCastRange(lvl -> 600 + 100. * lvl)
+	..presetAreaofEffect(lvl -> 128.)
 	..tooltipStopListen()
 

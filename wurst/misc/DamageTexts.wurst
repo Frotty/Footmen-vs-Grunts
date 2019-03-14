@@ -11,12 +11,13 @@ init
 		if dmg.abs() > 0.45
 			if dtype == DamageType.SPELL
 				let spelldmg = -dmg
-				let ft = createFText(target.getPos3Real(), spelldmg.toInt().toString(), 8.75 * max(0.9, min(3., spelldmg / 35.)), 0.75, vec2(0, 0.075), colorA(132, 28, 192, 255))
+				let ft = createFText(target.getPos3Real(), spelldmg.toInt().toString(), 9.75 * max(0.7, min(3., spelldmg / 45.)), 0.75, vec2(0, 0.075), colorA(132, 28, 192, 255))
 				ft.tt.setVisibility(GetLocalPlayer() == attacker.getOwner())
 			else if dtype == DamageType.ATTACK
-				let ft = createFText(target.getPos3Real(), dmg.toInt().toString(), 8.75 * max(0.9, min(3., dmg / 35.)), 0.75, vec2(0, 0.065), colorA(37, 150, 170, 255))
+				let ft = createFText(target.getPos3Real(), dmg.toInt().toString(), 9.75 * max(0.7, min(3., dmg / 45.)), 0.75, vec2(0, 0.065), colorA(37, 150, 170, 255))
 				ft.tt.setVisibility(GetLocalPlayer() == attacker.getOwner())
 
 public function showHealText(UnitEntity target, real healAmount, player caster)
-	let ft = createFText(target.getPos(), healAmount.toInt().toString(), 8.75 * max(0.9, min(3., healAmount / 35.)), 0.75, vec2(0, 0.065), colorA(207, 179, 17, 255))
-	ft.tt.setVisibility(GetLocalPlayer() == target.owner or GetLocalPlayer() == caster)
+	if target != null and not target.done
+		let ft = createFText(target.getPos(), healAmount.toInt().toString(), 9.75 * max(0.7, min(3., healAmount / 45.)), 0.75, vec2(0, 0.065), colorA(207, 179, 17, 255))
+		ft.tt.setVisibility(GetLocalPlayer() == target.owner or GetLocalPlayer() == caster)

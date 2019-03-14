@@ -1,4 +1,4 @@
-package HeroShaman
+package HeroThrall
 import Hero
 import GameConstants
 import Assets
@@ -9,32 +9,30 @@ import DummyCaster
 import OrderIds
 import PresetBuffs
 
-public constant ENTANGLE_SPELL_ID = compiletime(ABIL_ID_GEN.next())
-public constant ENTANGLE_DUMMY_SPELL_ID = compiletime(ABIL_ID_GEN.next())
+public constant TOTEM_SPELL_ID = compiletime(ABIL_ID_GEN.next())
+public constant LIGHTNING_SPELL_ID = compiletime(ABIL_ID_GEN.next())
 
 public constant RealLevelClosure ENTANGLE_AOE = lvl -> 198. + 24. * lvl
 
-
-
-public class Malfurion extends Hero
+public class Thrall extends Hero
 
 	construct(player owner, vec2 pos)
 		super(owner, pos, HERO_MALFURION_ID)
-		EventListener.onPointCast(actor, ENTANGLE_SPELL_ID) (caster, target) ->
-			let lvl = caster.getAbilityLevel(ENTANGLE_SPELL_ID)
-			flashEffect(Abilities.greenDragonMissile, target)
-			doAfter(0.55) ->
-				let dc = new DummyCaster()
-				..origin(pos)
-				..owner(owner)
-				forUnitsInRange(target, ENTANGLE_AOE.run(lvl)) u ->
-					if u.getEntity().owner.isEnemyOf(owner)
-						dc.castTarget(ENTANGLE_DUMMY_SPELL_ID, 1, OrderIds.entanglingroots, u)
+		// EventListener.onPointCast(actor, ENTANGLE_SPELL_ID) (caster, target) ->
+		// 	let lvl = caster.getAbilityLevel(ENTANGLE_SPELL_ID)
+		// 	flashEffect(Abilities.greenDragonMissile, target)
+		// 	doAfter(0.55) ->
+		// 		let dc = new DummyCaster()
+		// 		..origin(pos)
+		// 		..owner(owner)
+		// 		forUnitsInRange(target, ENTANGLE_AOE.run(lvl)) u ->
+		// 			if u.getEntity().owner.isEnemyOf(owner)
+		// 				dc.castTarget(ENTANGLE_DUMMY_SPELL_ID, 1, OrderIds.entanglingroots, u)
 
 
 @compiletime function genObjs()
 	new HeroDefinition(HERO_SHAMAN_ID, UnitIds.farseer)
-	..setName("Restoration Shaman")
+	..setName("Warchief Thrall")
 	..setHeroAbilities(commaList(""))
 
 	// var tgen = new AbilityTooltipGenerator("Entangles all units inside the target area after a small delay.")
